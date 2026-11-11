@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101b18">
+<title>FITTRACK — Aktivitas & Kesehatan</title>
+<style>
+:root{--bg:#0d1513;--panel:#17221e;--panel2:#202e28;--green:#b8f36b;--muted:#9aaba2;--white:#f4f8f5;--line:#304039;--orange:#ffb36b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,system-ui,Arial,sans-serif}
+.app{max-width:760px;margin:auto;padding:22px 17px 100px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.brand{font-weight:900;letter-spacing:2px;font-size:22px}.brand span{color:var(--green)}
+.pill{border:1px solid var(--line);border-radius:30px;padding:8px 12px;color:var(--muted);font-size:12px}
+h1{font-size:29px;line-height:1.15;margin:8px 0}.sub{color:var(--muted);font-size:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;margin:16px 0}
+.section-title{font-size:16px;font-weight:800;margin:0 0 14px}
+.activities{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.activity{background:var(--panel2);border:1px solid var(--line);border-radius:15px;padding:13px 6px;color:var(--white);font-weight:700;cursor:pointer}
+.activity .emoji{display:block;font-size:25px;margin-bottom:7px}.activity.active{border-color:var(--green);background:#263a2b;color:var(--green)}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.metric{background:var(--panel2);border-radius:15px;padding:14px}.metric small{color:var(--muted);display:block;margin-bottom:6px}
+.metric strong{font-size:25px}.unit{font-size:12px;color:var(--muted);margin-left:4px}
+.timer{text-align:center;padding:22px 0 12px}.time{font-size:48px;font-weight:850;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:30px;padding:12px 20px;font-weight:800;font-size:14px;cursor:pointer}
+.primary{background:var(--green);color:#142016}.secondary{background:var(--panel2);color:var(--white);border:1px solid var(--line)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.note{font-size:12px;color:var(--muted);line-height:1.5}
+canvas{width:100%;height:150px;background:var(--panel2);border-radius:14px}
+input{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--white);width:100%;font:inherit}
+label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}
+.history-item{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}
+.history-item:last-child{border:0}.history-item small{display:block;color:var(--muted);margin-top:4px}
+.tabs{position:fixed;bottom:0;left:0;right:0;background:#111c18ee;backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:34px;padding:13px}
+.tabs a{color:var(--muted);font-size:12px;text-decoration:none;text-align:center}.tabs b{display:block;font-size:19px;margin-bottom:3px}
+.green{color:var(--green)}.hidden{display:none}
+@media(min-width:600px){.metrics{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">FIT<span>TRACK</span></div><div class="pill">● ACTIVE LIFESTYLE</div></header>
+<section>
+ <p class="sub">GERAK LEBIH SEHAT, SETIAP HARI</p>
+ <h1>Halo, pejuang sehat!<br><span class="green">Siap bergerak?</span></h1>
+ <p class="sub">Catat aktivitasmu dan lihat perkembangan dari waktu ke waktu.</p>
+</section>
+
+<div class="card">
+ <h2 class="section-title">Pilih aktivitas</h2>
+ <div class="activities">
+  <button class="activity active" data-type="Running"><span class="emoji">🏃</span>Running</button>
+  <button class="activity" data-type="Walking"><span class="emoji">🚶</span>Walking</button>
+  <button class="activity" data-type="Cycling"><span class="emoji">🚴</span>Cycling</button>
+ </div>
+ <div class="timer"><div class="sub" id="status">SIAP MEMULAI</div><div class="time" id="timer">00:00:00</div>
+  <div class="controls">
+   <button class="primary" id="start">Mulai aktivitas</button>
+   <button class="secondary" id="pause" disabled>Jeda</button>
+   <button class="secondary" id="finish" disabled>Selesai</button>
+  </div>
+ </div>
+ <p class="note" id="gpsStatus">GPS belum aktif. Izinkan akses lokasi saat memulai untuk merekam rute dan jarak perkiraan.</p>
+</div>
+
+<div class="card">
+ <h2 class="section-title">Ringkasan aktivitas saat ini</h2>
+ <div class="metrics">
+  <div class="metric"><small>Jarak</small><strong id="distance">0.00</strong><span class="unit">km</span></div>
+  <div class="metric"><small>Durasi</small><strong id="duration">00:00</strong></div>
+  <div class="metric"><small>Kecepatan</small><strong id="speed">0.0</strong><span class="unit">km/j</span></div>
+  <div class="metric"><small>Kalori*</small><strong id="calories">0</strong><span class="unit">kkal</span></div>
+ </div>
+ <p class="note">*Kalori hanya perkiraan kasar, bukan pengukuran medis. Hasil dipengaruhi banyak faktor.</p>
+</div>
+
+<div class="card">
+ <h2 class="section-title">Rute perjalanan</h2>
+ <canvas id="route" width="680" height="260"></canvas>
+ <p class="note">Garis rute akan digambar dari titik GPS yang terekam. Akurasi bergantung pada perangkat, sinyal, dan izin lokasi.</p>
+</div>
+
+<div class="card">
+ <h2 class="section-title">Target harian</h2>
+ <div class="row"><div><label for="goal">Target jarak (km)</label><input id="goal" type="number" min="0.1" step="0.1" value="3"></div><div><label>Progres hari ini</label><strong style="font-size:23px" id="progress">0%</strong></div></div>
+ <div style="height:9px;background:var(--panel2);border-radius:20px;margin-top:14px;overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--green);border-radius:20px"></div></div>
+</div>
+
+<div class="card">
+ <h2 class="section-title">Riwayat aktivitas</h2>
+ <div id="history"><p class="note">Belum ada aktivitas tersimpan. Mulai bergerak untuk membuat riwayat pertamamu.</p></div>
+</div>
+<p class="note" style="text-align:center">FITTRACK • Catatan kebugaran pribadi<br>Bukan alat diagnosis atau pengganti saran tenaga kesehatan.</p>
+</div>
+<nav class="tabs"><a href="#top"><b>⌂</b>Beranda</a><a href="#route"><b>⌖</b>Rute</a><a href="#history"><b>▤</b>Riwayat</a></nav>
+
+<script>
+const $=id=>document.getElementById(id);
+let type='Running', running=false, paused=false, seconds=0, timerId=null, watchId=null;
+let points=[], distance=0, lastPoint=null, startTime=null;
+const saved=JSON.parse(localStorage.getItem('fittrack_history')||'[]');
+function fmt(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':')}
+function update(){
+ $('timer').textContent=fmt(seconds);$('duration').textContent=fmt(seconds).slice(3);
+ $('distance').textContent=distance.toFixed(2);
+ const hours=seconds/3600, speed=hours>0?distance/hours:0;
+ $('speed').textContent=speed.toFixed(1);
+ // Perkiraan ilustratif sederhana, bukan estimasi personal yang tervalidasi.
+ const factor=type==='Cycling'?30:type==='Running'?60:35;
+ $('calories').textContent=Math.round(seconds/60*factor/60);
+ const goal=Math.max(.1,Number($('goal').value)||3), pct=Math.min(100,Math.round(distance/goal*100));
+ $('progress').textContent=pct+'%';$('bar').style.width=pct+'%';
+}
+function haversine(a,b){const R=6371,rad=x=>x*Math.PI/180,dLat=rad(b.lat-a.lat),dLon=rad(b.lon-a.lon);
+ const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;
+ return 2*R*Math.asin(Math.sqrt(x))}
+function drawRoute(){
+ const c=$('route'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+ ctx.strokeStyle='#304039';ctx.lineWidth=1;for(let x=40;x<c.width;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke()}
+ for(let y=40;y<c.height;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke()}
+ if(!points.length){ctx.fillStyle='#9aaba2';ctx.font='16px Arial';ctx.fillText('Rute GPS akan tampil di sini',190,130);return}
+ const lats=points.map(p=>p.lat),lons=points.map(p=>p.lon),minLat=Math.min(...lats),maxLat=Math.max(...lats),minLon=Math.min(...lons),maxLon=Math.max(...lons);
+ const px=p=>({x:35+(p.lon-minLon)/(maxLon-minLon||1)*(c.width-70),y:c.height-35-(p.lat-minLat)/(maxLat-minLat||1)*(c.height-70)});
+ ctx.strokeStyle='#b8f36b';ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+ points.forEach((p,i)=>{let q=px(p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.stroke();
+ const first=px(points[0]),last=px(points[points.length-1]);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(first.x,first.y,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffb36b';ctx.beginPath();ctx.arc(last.x,last.y,7,0,Math.PI*2);ctx.fill();
+}
+function gpsSuccess(pos){
+ const p={lat:pos.coords.latitude,lon:pos.coords.longitude};
+ if(lastPoint){const d=haversine(lastPoint,p);if(d<0.5 && pos.coords.accuracy<60)distance+=d;}
+ if(!lastPoint || pos.coords.accuracy<60){points.push(p);lastPoint=p;drawRoute();update()}
+ $('gpsStatus').textContent='GPS aktif • Akurasi sekitar '+Math.round(pos.coords.accuracy)+' meter.';
+}
+function gpsError(err){$('gpsStatus').textContent='Lokasi tidak tersedia ('+err.message+'). Timer tetap berjalan; jarak GPS tidak tercatat.'}
+function start(){
+ if(running)return;running=true;paused=false;startTime=Date.now()-seconds*1000;
+ $('status').textContent='AKTIVITAS BERLANGSUNG';$('start').disabled=true;$('pause').disabled=false;$('finish').disabled=false;
+ timerId=setInterval(()=>{seconds=Math.floor((Date.now()-startTime)/1000);update()},500);
+ if(navigator.geolocation){watchId=navigator.geolocation.watchPosition(gpsSuccess,gpsError,{enableHighAccuracy:true,maximumAge:2000,timeout:12000})}
+ else $('gpsStatus').textContent='Browser ini tidak mendukung GPS.';
+}
+function pause(){
+ if(!running)return;running=false;paused=true;clearInterval(timerId);if(watchId!==null)navigator.geolocation.clearWatch(watchId);
+ $('status').textContent='AKTIVITAS DIJEDA';$('start').disabled=false;$('start').textContent='Lanjutkan';$('pause').disabled=true;
+}
+function finish(){
+ if(running)pause();if(seconds===0){reset();return}
+ const item={type,seconds,distance:+distance.toFixed(2),date:new Date().toLocaleString('id-ID')};
+ saved.unshift(item);localStorage.setItem('fittrack_history',JSON.stringify(saved));
+ renderHistory();$('status').textContent='AKTIVITAS TERSIMPAN';$('start').textContent='Mulai aktivitas';reset(false);
+}
+function reset(clear=true){
+ clearInterval(timerId);if(watchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(watchId);
+ running=false;paused=false;watchId=null;seconds=0;distance=0;points=[];lastPoint=null;
+ $('start').disabled=false;$('pause').disabled=true;$('finish').disabled=true;$('start').textContent='Mulai aktivitas';
+ if(clear){$('status').textContent='SIAP MEMULAI';$('gpsStatus').textContent='GPS belum aktif. Izinkan akses lokasi saat memulai.'}
+ update();drawRoute();
+}
+function renderHistory(){
+ $('history').innerHTML=saved.length?saved.slice(0,12).map(x=>`<div class="history-item"><div><b>${x.type}</b><small>${x.date} • ${fmt(x.seconds)}</small></div><div style="text-align:right"><b>${x.distance.toFixed(2)} km</b><small>aktivitas</small></div></div>`).join(''):'<p class="note">Belum ada aktivitas tersimpan.</p>';
+}
+document.querySelectorAll('.activity').forEach(b=>b.addEventListener('click',()=>{if(running||paused)return;document.querySelectorAll('.activity').forEach(x=>x.classList.remove('active'));b.classList.add('active');type=b.dataset.type;update()}));
+$('start').onclick=start;$('pause').onclick=pause;$('finish').onclick=finish;$('goal').oninput=update;
+renderHistory();update();drawRoute();
+</script>
+</body>
+</html>
